@@ -11,8 +11,5 @@ if [[ $(< main.cpp) != "$formatted" ]]; then
 	echo "$formatted" > main.cpp
 fi
 
-cmake -H. -B"Build/release" -DCMAKE_BUILD_TYPE=Release
+./build-run.sh
 
-cmake --build "Build/release" -j 2
-
-Build/release/flecs_bench "${@}"
