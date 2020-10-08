@@ -5,57 +5,57 @@
 #include "nonius.hpp"
 
 typedef struct {
-  float value;
+  ecs_entity_t value;
 } Comp_A;
 typedef struct {
-  float value;
+  ecs_entity_t value;
 } Comp_B;
 typedef struct {
-  float value;
+  ecs_entity_t value;
 } Comp_C;
 typedef struct {
-  float value;
+  ecs_entity_t value;
 } Comp_D;
 typedef struct {
-  float value;
+  ecs_entity_t value;
 } Comp_E;
 typedef struct {
-  float value;
+  ecs_entity_t value;
 } Comp_F;
 typedef struct {
-  float value;
+  ecs_entity_t value;
 } Comp_G;
 typedef struct {
-  float value;
+  ecs_entity_t value;
 } Comp_H;
 
 typedef struct {
-  float value;
+  ecs_entity_t value;
 } Comp_I;
 typedef struct {
-  float value;
+  ecs_entity_t value;
 } Comp_J;
 typedef struct {
-  float value;
+  ecs_entity_t value;
 } Comp_K;
 typedef struct {
-  float value;
+  ecs_entity_t value;
 } Comp_L;
 typedef struct {
-  float value;
+  ecs_entity_t value;
 } Comp_M;
 typedef struct {
-  float value;
+  ecs_entity_t value;
 } Comp_N;
 typedef struct {
-  float value;
+  ecs_entity_t value;
 } Comp_O;
 typedef struct {
-  float value;
+  ecs_entity_t value;
 } Comp_P;
 
 typedef struct {
-  float value;
+  ecs_entity_t value;
 } Comp_Q;
 
 ECS_COMPONENT_DECLARE(Comp_A);
@@ -234,6 +234,7 @@ NONIUS_BENCHMARK("flecs_new_w_entity", [](nonius::chronometer meter) {
   ecs_fini(world);
 });
 
+/*
 NONIUS_BENCHMARK("flecs_new_1_comp", [](nonius::chronometer meter) {
   ecs_world_t *world = world_init();
 
@@ -244,22 +245,130 @@ NONIUS_BENCHMARK("flecs_new_1_comp", [](nonius::chronometer meter) {
 
   ecs_fini(world);
 });
+*/
 
-void flecs_new_n_comp(nonius::chronometer meter, ecs_world_t *world,
-                      ecs_type_t type) {
+/*
+void flecs_new_n_comp<F>(nonius::chronometer meter, ecs_world_t *world,
+                         ecs_type_t type,
+                         F setter) { // ecs_entities_t *shape, void *data) {
   ecs_dim(world, meter.runs());
   ecs_dim_type(world, type, meter.runs());
 
-  meter.measure([&world, type] { ecs_new_w_type(world, type); });
+  meter.measure([&world, type, shape, data] {
+    // return ecs_new_w_type(world, type);
+    // return ecs_bulk_new_w_data(world, 1, shape, data);
+    void entity = ecs_new_w_type(world, type);
+    setter(entity);
+    return entity;
+  });
 
   ecs_fini(world);
 }
+*/
+
+#undef ecs_set // The existing one is broken, taking reference of temporary
+#define ecs_set(world, e, comp, init)                                          \
+  {                                                                            \
+    comp c init;                                                               \
+    ecs_set_ptr_w_entity(world, e, ecs_entity(comp), sizeof(comp), &c);        \
+  }
+
+NONIUS_BENCHMARK("flecs_new_1_comp", [](nonius::chronometer meter) {
+  ecs_world_t *world = world_init();
+  // flecs_new_n_comp(meter, world, ecs_type(Comp_A));
+  // ecs_entity_t shape_data[] = {ecs_entity(Comp_A)};
+  // ecs_entities_t shape = {.array = shape_data, .count = 1};
+  // Comp_A a[] = {{1}};
+  // void *data[] = {&a};
+  // flecs_new_n_comp(meter, world, ecs_type(Comp_A), &shape, &data);
+  // flecs_new_n_comp(meter, world, ecs_type(Comp_A), [](ecs_entity_t e) {
+  //		  Comp_A *ptr = (Comp_A*)ecs_get_ref_w_entity(world, &refs[e],
+  // ids[e], comp);
+  //		  });
+  ecs_dim_type(world, ecs_type(Comp_A), meter.runs());
+  meter.measure([&world] {
+    ecs_entity_t e = ecs_new_w_type(world, ecs_type(Comp_A));
+    // Comp_A a{e};
+    // ecs_set(world, e, Comp_A, a);
+    ecs_set(world, e, Comp_A, {e});
+    return e;
+  });
+  ecs_fini(world);
+});
 
 NONIUS_BENCHMARK("flecs_new_4_comp", [](nonius::chronometer meter) {
   ecs_world_t *world = world_init();
-  flecs_new_n_comp(meter, world, ecs_type(Type4));
+  // flecs_new_n_comp(meter, world, ecs_type(Type4));
+  // ecs_entity_t shape_data[] = {ecs_entity(Comp_A), ecs_entity(Comp_B),
+  //                             ecs_entity(Comp_C), ecs_entity(Comp_D)};
+  // ecs_entities_t shape = {.array = shape_data, .count = 4};
+  // Comp_A a[] = {{1}};
+  // Comp_B b[] = {{1}};
+  // Comp_C c[] = {{1}};
+  // Comp_D d[] = {{1}};
+  // void *data[] = {&a, &b, &c, &d};
+  // flecs_new_n_comp(meter, world, ecs_type(Type4), &shape, &data);
+  ecs_dim_type(world, ecs_type(Type4), meter.runs());
+  meter.measure([&world] {
+    ecs_entity_t e = ecs_new_w_type(world, ecs_type(Type4));
+    ecs_set(world, e, Comp_A, {e});
+    ecs_set(world, e, Comp_B, {e});
+    ecs_set(world, e, Comp_C, {e});
+    ecs_set(world, e, Comp_D, {e});
+    // ecs_set(world, e, Comp_A, Comp_A{e});
+    // ecs_set(world, e, Comp_B, {e});
+    // ecs_set(world, e, Comp_C, {e});
+    // ecs_set(world, e, Comp_D, {e});
+    return e;
+  });
+  ecs_fini(world);
 });
 
+NONIUS_BENCHMARK("flecs_new_8_comp", [](nonius::chronometer meter) {
+  ecs_world_t *world = world_init();
+  ecs_dim_type(world, ecs_type(Type8), meter.runs());
+  meter.measure([&world] {
+    ecs_entity_t e = ecs_new_w_type(world, ecs_type(Type8));
+    ecs_set(world, e, Comp_A, {e});
+    ecs_set(world, e, Comp_B, {e});
+    ecs_set(world, e, Comp_C, {e});
+    ecs_set(world, e, Comp_D, {e});
+    ecs_set(world, e, Comp_E, {e});
+    ecs_set(world, e, Comp_F, {e});
+    ecs_set(world, e, Comp_G, {e});
+    ecs_set(world, e, Comp_H, {e});
+    return e;
+  });
+  ecs_fini(world);
+});
+
+NONIUS_BENCHMARK("flecs_new_16_comp", [](nonius::chronometer meter) {
+  ecs_world_t *world = world_init();
+  ecs_dim_type(world, ecs_type(Type16), meter.runs());
+  meter.measure([&world] {
+    ecs_entity_t e = ecs_new_w_type(world, ecs_type(Type16));
+    ecs_set(world, e, Comp_A, {e});
+    ecs_set(world, e, Comp_B, {e});
+    ecs_set(world, e, Comp_C, {e});
+    ecs_set(world, e, Comp_D, {e});
+    ecs_set(world, e, Comp_E, {e});
+    ecs_set(world, e, Comp_F, {e});
+    ecs_set(world, e, Comp_G, {e});
+    ecs_set(world, e, Comp_H, {e});
+    ecs_set(world, e, Comp_I, {e});
+    ecs_set(world, e, Comp_J, {e});
+    ecs_set(world, e, Comp_K, {e});
+    ecs_set(world, e, Comp_L, {e});
+    ecs_set(world, e, Comp_M, {e});
+    ecs_set(world, e, Comp_N, {e});
+    ecs_set(world, e, Comp_O, {e});
+    ecs_set(world, e, Comp_P, {e});
+    return e;
+  });
+  ecs_fini(world);
+});
+
+/*
 NONIUS_BENCHMARK("flecs_new_8_comp", [](nonius::chronometer meter) {
   ecs_world_t *world = world_init();
   flecs_new_n_comp(meter, world, ecs_type(Type8));
@@ -269,5 +378,78 @@ NONIUS_BENCHMARK("flecs_new_16_comp", [](nonius::chronometer meter) {
   ecs_world_t *world = world_init();
   flecs_new_n_comp(meter, world, ecs_type(Type16));
 });
+*/
 
+NONIUS_BENCHMARK("flecs_bulk_new_id", [](nonius::chronometer meter) {
+  ecs_world_t *world = world_init();
 
+  ecs_dim(world, meter.runs());
+
+  meter.measure(
+      [&world, &meter] { return ecs_bulk_new(world, 0, meter.runs()); });
+
+  ecs_fini(world);
+});
+
+NONIUS_BENCHMARK("flecs_bulk_new_id_recycle", [](nonius::chronometer meter) {
+  ecs_world_t *world = world_init();
+
+  ecs_dim(world, meter.runs());
+
+  create_recycled_entities(world, meter.runs());
+
+  meter.measure(
+      [&world, &meter] { return ecs_bulk_new(world, 0, meter.runs()); });
+
+  ecs_fini(world);
+});
+
+void flecs_bulk_new_n_comp(nonius::chronometer meter, ecs_world_t *world,
+                           ecs_type_t type) {
+  ecs_dim(world, meter.runs());
+  ecs_dim_type(world, type, meter.runs());
+
+  meter.measure([&world, type, &meter] {
+    return ecs_bulk_new_w_type(world, type, meter.runs());
+  });
+
+  ecs_fini(world);
+}
+
+NONIUS_BENCHMARK("flecs_bulk_new_1_comp", [](nonius::chronometer meter) {
+  ecs_world_t *world = world_init();
+  flecs_bulk_new_n_comp(meter, world, ecs_type(Comp_A));
+});
+
+NONIUS_BENCHMARK("flecs_bulk_new_4_comp", [](nonius::chronometer meter) {
+  ecs_world_t *world = world_init();
+  flecs_bulk_new_n_comp(meter, world, ecs_type(Type4));
+});
+
+NONIUS_BENCHMARK("flecs_bulk_new_8_comp", [](nonius::chronometer meter) {
+  ecs_world_t *world = world_init();
+  flecs_bulk_new_n_comp(meter, world, ecs_type(Type8));
+});
+
+NONIUS_BENCHMARK("flecs_bulk_new_16_comp", [](nonius::chronometer meter) {
+  ecs_world_t *world = world_init();
+  flecs_bulk_new_n_comp(meter, world, ecs_type(Type16));
+});
+
+NONIUS_BENCHMARK("flecs_delete_id", [](nonius::chronometer meter) {
+  ecs_world_t *world = world_init();
+  auto runs = meter.runs();
+  std::vector<ecs_entity_t> entities;
+  for (int i = 0; i < runs; i++)
+    entities.push_back(ecs_new_id(world));
+  int i = 0;
+  meter.measure([&world, &entities, &i] { ecs_delete(world, entities[i++]); });
+  ecs_fini(world);
+});
+
+NONIUS_BENCHMARK("flecs_is_alive_for_nonexist", [](nonius::chronometer meter) {
+  ecs_world_t *world = world_init();
+  int i = 0;
+  meter.measure([&world, &i] { return ecs_is_alive(world, i++); });
+  ecs_fini(world);
+});

@@ -11,5 +11,5 @@ if [[ $(< main.cpp) != "$formatted" ]]; then
 	echo "$formatted" > main.cpp
 fi
 
-./build-run.sh
+./build-run.sh "${@}"
 
