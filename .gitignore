@@ -1,0 +1,21 @@
+# Blacklist everything by default
+*
+
+# Whitelist directories (directories with no tracked files don't get committed regardless)
+!**/
+
+!/.gitignore
+!/.gitattributes
+
+!/README.md
+
+!/*.h
+!/*.c
+!/*.hpp
+!/*.cpp
+
+!/CMakeLists.txt
+
+!/*.sh
+
+!/.clang-format
